@@ -1,14 +1,15 @@
 import React from 'react';
 import { Animated, Platform, StyleSheet, View, TouchableOpacity, Dimensions } from 'react-native';
+import {Text} from "native-base";
 
 const ios = Platform.OS === 'ios';
 const {width, height} = Dimensions.get('window');
 // from native-base
 const isIphoneX = ios && (height === 812 || width === 812);
 const iphoneXTopInset = 24;
-const initToolbarHeight = ios ? 46 : 56;
+const initToolbarHeight = ios ? 28 : 38;
 
-const paddingTop = ios ? 18 : 0;
+const paddingTop = ios ? 10 : 6;
 const topInset =  isIphoneX ? iphoneXTopInset : 0;
 
 const toolbarHeight = initToolbarHeight + topInset + paddingTop;
@@ -40,7 +41,7 @@ export default class Header extends React.PureComponent {
 
   _getFontSize = () => {
     const { scrollOffset } = this.state;
-    const backFontSize = this.props.backTextStyle.fontSize || Header.defaultProps.backTextStyle.fontSize;
+    const backFontSize = 24;
     const titleFontSize = this.props.titleStyle.fontSize || Header.defaultProps.titleStyle.fontSize;
     return scrollOffset.interpolate({
       inputRange: [0, this.headerHeight - toolbarHeight],
@@ -80,7 +81,7 @@ export default class Header extends React.PureComponent {
 
   _getOpacity = () => {
     const { scrollOffset } = this.state;
-    return this.props.backText ? scrollOffset.interpolate({
+    return this.props.subTitle ? scrollOffset.interpolate({
       inputRange: [0, this.headerHeight - toolbarHeight],
       outputRange: [1, 0],
       extrapolate: 'clamp',
@@ -116,6 +117,15 @@ export default class Header extends React.PureComponent {
     }
   }
 
+  _getStatusIconSize = () => {
+    const { scrollOffset } = this.state;
+    return scrollOffset.interpolate({
+      inputRange: [0, this.headerHeight - toolbarHeight],
+      outputRange: [28, 18],
+      extrapolate: 'clamp',
+    });
+  }
+
   render() {
     const { imageSource, toolbarColor, titleStyle, onBackPress, backStyle, backTextStyle } = this.props;
     const height = this._getHeight();
@@ -124,6 +134,7 @@ export default class Header extends React.PureComponent {
     const opacity = this._getOpacity();
     const fontSize = this._getFontSize();
     const imageOpacity = this._getImageOpacity();
+    const iconSize = this._getStatusIconSize();
     const headerStyle = this.props.noBorder ? undefined : { borderBottomWidth: 1, borderColor: '#a7a6ab'}
 
     return (
@@ -136,7 +147,7 @@ export default class Header extends React.PureComponent {
               backgroundColor: toolbarColor,
             },
           ]}>
-          {imageSource && <Animated.Image 
+          {imageSource && <Animated.Image
             style={[StyleSheet.absoluteFill, {width: null, height: null, opacity: imageOpacity}, this._getImageScaleStyle()]}
             source={imageSource}
             resizeMode='cover'
@@ -145,22 +156,54 @@ export default class Header extends React.PureComponent {
             <View style={styles.statusBar} />
             <View style={styles.toolbar}>
               {this.props.renderLeft && this.props.renderLeft()}
-              <TouchableOpacity disabled={!onBackPress} onPress={onBackPress} activeOpacity={0.8} style={[styles.titleButton, backStyle]} onLayout={this.onBackLayout}>
-                <Animated.Text style={[backTextStyle, { alignSelf: 'center', opacity: opacity }]}>{this.props.backText || 'Back2'}</Animated.Text>
-              </TouchableOpacity>
+              {/*<TouchableOpacity disabled={!onBackPress} onPress={onBackPress} activeOpacity={0.8} style={[styles.titleButton, backStyle]} onLayout={this.onBackLayout}>*/}
+              {/*  <Animated.Text style={[backTextStyle, { alignSelf: 'center', opacity: opacity }]}>{this.props.backText || 'Back2'}</Animated.Text>*/}
+              {/*</TouchableOpacity>*/}
               <View style={styles.flexView} />
               {this.props.renderRight && this.props.renderRight()}
             </View>
           </View>
-          <Animated.Text style={[titleStyle, {
+          <Animated.View style={[titleStyle, {
             position: 'absolute',
             left: left,
             bottom: bottom,
             fontSize,
           }]}>
-            {this.props.title}
+            <View
+              style={{
+                width,
+                paddingHorizontal: 30,
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'flex-start',
+              }}>
+              <Animated.View
+                style={{
+                  width: iconSize,
+                  height: iconSize,
+                  borderRadius: 20,
+                  backgroundColor: '#fbe20b',
+                  marginRight: 10,
+                }}
+              />
+              <Animated.Text
+                style={{color: 'white', fontSize}}
+                numberOfLines={1}
+                ellipsizeMode="tail">
+                {this.props.title}
+              </Animated.Text>
+            </View>
+          </Animated.View>
+          <Animated.Text style={[titleStyle, {
+            opacity: opacity,
+            position: 'absolute',
+            left: 30,
+            bottom: 45,
+            fontSize: 16,
+          }]}>
+            {this.props.subTitle}
           </Animated.Text>
-        </Animated.View>    
+        </Animated.View>
     );
   }
 }
@@ -173,8 +216,8 @@ const styles = StyleSheet.create({
     height: topInset + paddingTop
   },
   toolbar: {
-    flex: 1,  
-    flexDirection: 'row', 
+    flex: 1,
+    flexDirection: 'row',
     alignItems: 'center'
   },
   header: {
@@ -194,7 +237,8 @@ const styles = StyleSheet.create({
 
 Header.defaultProps = {
   backText: '',
-  title: '',
+  title: null,
+  subTitle: '',
   renderLeft: undefined,
   renderRight: undefined,
   backStyle: { marginLeft: 10 },
